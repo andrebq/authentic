@@ -34,10 +34,7 @@ func New() *TokenCache {
 // Contains implements proxy.TokenSet
 func (tc *TokenCache) Contains(k string) (bool, error) {
 	val, _ := tc.cache.Get(k)
-	if val == nil {
-		return true, nil
-	}
-	return false, nil
+	return val != nil, nil
 }
 
 // Add includes the given token to the set

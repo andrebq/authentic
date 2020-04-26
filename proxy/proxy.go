@@ -39,9 +39,7 @@ func NewReverse(cookieName, realm string, tokens TokenSet, target *url.URL) *Rev
 // ServeHTTP implements net/http Handler
 func (r *Reverse) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	cookie, err := req.Cookie(r.cookieName)
-	println("/cookieName", r.cookieName, "/cookie", cookie, "/err", err)
 	if cookie == nil || err != nil {
-		println("no cookie")
 		w.Header().Add("WWW-Authenticate", r.realm)
 		w.WriteHeader(http.StatusUnauthorized)
 		io.WriteString(w, "Not Authorized")
@@ -56,7 +54,6 @@ func (r *Reverse) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if !valid {
-		println("invalid cookie, value is", cookie.Value)
 		w.Header().Add("WWW-Authenticate", r.realm)
 		w.WriteHeader(http.StatusUnauthorized)
 		io.WriteString(w, "Not Authorized")
