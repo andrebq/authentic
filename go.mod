@@ -3,6 +3,7 @@ module github.com/andrebq/authentic
 go 1.14
 
 require (
+	github.com/allegro/bigcache v1.2.1
 	github.com/cjoudrey/gluahttp v0.0.0-20190104103309-101c19a37344
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
