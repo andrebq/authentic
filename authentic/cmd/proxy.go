@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"log"
+	"net/http"
 	"net/url"
 
+	"github.com/andrebq/authentic/auth"
 	"github.com/andrebq/authentic/internal/tcache"
 	"github.com/andrebq/authentic/proxy"
 	"github.com/andrebq/authentic/server"
@@ -20,12 +22,21 @@ var proxyCmd = &cobra.Command{
 		}
 		cache := tcache.New()
 		cache.Add("hello")
-		srv := server.New(proxy.NewReverse(
+
+		authServer := auth.New("/auth/")
+
+		proxyServer := proxy.NewReverse(
 			cmd.Flag("cookieName").Value.String(),
 			cmd.Flag("realm").Value.String(),
 			cache,
-			target,
-		))
+			target)
+
+		mux := http.NewServeMux()
+		mux.Handle("/auth/", authServer)
+		mux.Handle("/", proxyServer)
+
+		srv := server.New(mux)
+
 		log.Printf("Starting authentic proxy: %v", srv.Addr)
 		err = server.ListenAndServeTLS(srv)
 		if err != nil {

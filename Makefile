@@ -1,13 +1,19 @@
-.PHONY: build verify compile-e2e gotidy install-cobra clean docker docker-build docker-verify
+.PHONY: build verify compile-e2e gotidy setup-dev clean docker docker-build docker-verify package watch
 
 DOCKER_TAG ?= latest
 
 build:
 	go build ./...
 
+package:
+	pkger -o res
+
 gotidy: build
 	go fmt ./...
 	go mod tidy
+
+watch:
+	modd
 
 compile-e2e:
 	go build -o dist/check ./internal/cmd/check
@@ -17,8 +23,9 @@ compile-e2e:
 verify: compile-e2e build
 	check -workdir e2e -file main.lua
 
-install-cobra:
+setup-dev:
 	go get -u github.com/spf13/cobra/cobra
+	go get -u github.com/markbates/pkger/cmd/pkger
 
 docker: | docker-build docker-verify
 
