@@ -17,4 +17,6 @@ res, err = http.post('https://localhost:8080/auth/login', {body= formBody})
 if err then fatal(err) end
 if res.status_code ~=200 then fatal("Unexpected status code.", res.status_code) end
 
-res, err = http.get('')
+local res, err = http.get('https://localhost:8080/hello/world')
+if err then fatal(err) end
+if res.status_code ~= 200 then fatal("Access should be allowed", res.status_code, " body: ", res.body) end

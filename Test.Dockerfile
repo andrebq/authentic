@@ -1,6 +1,6 @@
 FROM golang:1-alpine
 
-RUN apk add --no-cache make tini openssl
+RUN apk add --no-cache make tini openssl redis
 
 COPY go.mod go.sum /authentic/
 WORKDIR /authentic

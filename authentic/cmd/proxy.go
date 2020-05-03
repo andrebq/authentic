@@ -7,6 +7,7 @@ import (
 
 	"github.com/andrebq/authentic/auth"
 	"github.com/andrebq/authentic/internal/session"
+	"github.com/andrebq/authentic/internal/tcache"
 	"github.com/andrebq/authentic/proxy"
 	"github.com/andrebq/authentic/server"
 	"github.com/spf13/cobra"
@@ -20,7 +21,13 @@ var proxyCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		s, err := session.New(nil, nil)
+
+		redis, err := tcache.NewRedis("localhost:6379")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		s, err := session.New(redis, nil)
 		if err != nil {
 			panic(err)
 		}

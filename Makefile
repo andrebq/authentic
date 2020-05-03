@@ -32,5 +32,8 @@ docker: | docker-build docker-verify
 docker-build: gotidy
 	docker build -t authentic:test-${DOCKER_TAG} -f Test.Dockerfile .
 
+docker-run: docker-build
+	docker run --rm -ti authentic:test-${DOCKER_TAG} /bin/sh 
+
 docker-verify:
 	docker run --rm authentic:test-${DOCKER_TAG} /bin/sh /authentic/e2e/check.sh

@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 
+redis-server >/dev/null 2>&1 &
+redisPid=$!
+
 mkdir -p /etc/authentic/certificate
 openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
     -subj "/C=UN/ST=MilkyWay/L=World/O=example/CN=localhost:8080" \
@@ -26,6 +29,11 @@ ec=$?
 echo "Leaving"
 sleep 1
 
+/usr/bin/redis-cli <<EOF
+keys *
+EOF
+
 kill ${echoPid}
 kill ${authenticPid}
+kill ${redisPid}
 exit "${ec}"
