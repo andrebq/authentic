@@ -3,12 +3,14 @@ module github.com/andrebq/authentic
 go 1.14
 
 require (
+	firebase.google.com/go v3.12.1+incompatible
 	github.com/allegro/bigcache v1.2.1
 	github.com/cjoudrey/gluahttp v0.0.0-20190104103309-101c19a37344
 	github.com/cjoudrey/gluaurl v0.0.0-20161028222611-31cbb9bef199
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-redis/redis/v7 v7.2.0
 	github.com/gobuffalo/here v0.6.2 // indirect
+	github.com/googleapis/gax-go v1.0.3 // indirect
 	github.com/gorilla/mux v1.7.4
 	github.com/markbates/pkger v0.15.1
 	github.com/mitchellh/go-homedir v1.1.0
@@ -21,7 +23,9 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.6.3
 	github.com/yuin/gopher-lua v0.0.0-20191220021717-ab39c6098bdb
+	go.opencensus.io v0.22.3 // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478
 	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
+	google.golang.org/api v0.22.0 // indirect
 	gopkg.in/ini.v1 v1.55.0 // indirect
 )

@@ -13,15 +13,34 @@ import (
 
 type (
 	Login struct {
-		once  sync.Once
-		t     *template.Template
-		s     *session.S
-		realm string
+		once    sync.Once
+		t       *template.Template
+		s       *session.S
+		catalog UserCatalog
+		realm   string
+	}
+
+	// UserCatalog implements a read-only database of user information
+	UserCatalog interface {
+		// Authenticate re
+		Authenticate(username, password string) error
 	}
 )
 
 // New login page - POST
 func (l *Login) New(w http.ResponseWriter, req *http.Request) {
+	err := req.ParseForm()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = l.catalog.Authenticate(req.Form.Get("username"), req.Form.Get("password"))
+	if err != nil {
+		webflow.Authenticate(w, req, l.realm, "Invalid credentials")
+		return
+	}
+
 	tk, expire, err := l.s.Start(time.Now())
 	if err != nil {
 		webflow.InternalError(w, req)
