@@ -38,6 +38,6 @@ func (tc *TokenCache) Contains(k string) (bool, error) {
 }
 
 // Add includes the given token to the set
-func (tc *TokenCache) Add(k string) error {
+func (tc *TokenCache) Add(k string, _ time.Time) error {
 	return tc.cache.Set(k, []byte(k))
 }

@@ -1,10 +1,12 @@
 package proxy
 
 import (
-	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+
+	"github.com/andrebq/authentic/internal/session"
+	"github.com/andrebq/authentic/internal/webflow"
 )
 
 type (
@@ -13,7 +15,7 @@ type (
 		actual     *httputil.ReverseProxy
 		cookieName string
 		realm      string
-		tokens     TokenSet
+		s          *session.S
 	}
 
 	// TokenSet represents the entire set of valid tokens
@@ -27,12 +29,12 @@ type (
 // if the cookie is not present any request will return 401.
 //
 // If the cookie is present, access to the target is allowed
-func NewReverse(cookieName, realm string, tokens TokenSet, target *url.URL) *Reverse {
+func NewReverse(cookieName, realm string, session *session.S, target *url.URL) *Reverse {
 	return &Reverse{
 		actual:     httputil.NewSingleHostReverseProxy(target),
 		cookieName: cookieName,
 		realm:      realm,
-		tokens:     tokens,
+		s:          session,
 	}
 }
 
@@ -40,25 +42,21 @@ func NewReverse(cookieName, realm string, tokens TokenSet, target *url.URL) *Rev
 func (r *Reverse) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	cookie, err := req.Cookie(r.cookieName)
 	if cookie == nil || err != nil {
-		w.Header().Add("WWW-Authenticate", r.realm)
-		w.WriteHeader(http.StatusUnauthorized)
-		io.WriteString(w, "Not Authorized")
+		webflow.Authenticate(w, req, r.realm, "Please authenticate")
 		return
 	}
 
-	valid, err := r.tokens.Contains(cookie.Value)
-	if err != nil {
-		// TODO: think about how to log this (or if should log at all)
-		w.WriteHeader(http.StatusInternalServerError)
-		io.WriteString(w, "Oopsie!")
+	err = r.s.Verify(cookie.Value)
+	switch {
+	case session.IsExpired(err):
+		webflow.Authenticate(w, req, r.realm, "Login expired, please re-authenticate.")
+		return
+	case session.IsInvalid(err):
+		webflow.Authenticate(w, req, r.realm, "Invalid credentials, please authenticate.")
+		return
+	case err != nil:
+		webflow.InternalError(w, req)
 		return
 	}
-	if !valid {
-		w.Header().Add("WWW-Authenticate", r.realm)
-		w.WriteHeader(http.StatusUnauthorized)
-		io.WriteString(w, "Not Authorized")
-		return
-	}
-	// finally, let the request go to the next handler
 	r.actual.ServeHTTP(w, req)
 }

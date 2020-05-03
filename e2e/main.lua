@@ -1,4 +1,4 @@
 skipVerify()
-println("loading basics.lua")
-require('basics')
-require('auth')
+
+require('test_login')
+require('test_protected')

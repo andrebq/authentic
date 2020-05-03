@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	"github.com/andrebq/authentic/auth"
-	"github.com/andrebq/authentic/internal/tcache"
+	"github.com/andrebq/authentic/internal/session"
 	"github.com/andrebq/authentic/proxy"
 	"github.com/andrebq/authentic/server"
 	"github.com/spf13/cobra"
@@ -20,15 +20,17 @@ var proxyCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		cache := tcache.New()
-		cache.Add("hello")
+		s, err := session.New(nil, nil)
+		if err != nil {
+			panic(err)
+		}
 
-		authServer := auth.New("/auth/")
+		authServer := auth.New("/auth/", s)
 
 		proxyServer := proxy.NewReverse(
 			cmd.Flag("cookieName").Value.String(),
 			cmd.Flag("realm").Value.String(),
-			cache,
+			s,
 			target)
 
 		mux := http.NewServeMux()

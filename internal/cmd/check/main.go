@@ -7,11 +7,15 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
 	"os"
 	"strings"
 
 	"github.com/cjoudrey/gluahttp"
+	"github.com/cjoudrey/gluaurl"
 	lua "github.com/yuin/gopher-lua"
+	"golang.org/x/net/publicsuffix"
 )
 
 var (
@@ -26,7 +30,7 @@ func printFn(l *lua.LState) int {
 	ac := l.GetTop()
 	args := make([]string, 0, ac)
 	for i := 1; i <= ac; i++ {
-		val := l.Get(-i)
+		val := l.Get(i)
 		args = append(args, fmt.Sprintf("%v", val))
 	}
 	l.Pop(ac)
@@ -51,22 +55,61 @@ func skipVerifyFn(l *lua.LState) int {
 	return 0
 }
 
+func noRedirect(_ *http.Request, _ []*http.Request) error {
+	return http.ErrUseLastResponse
+}
+
+type (
+	testJar struct {
+		http.CookieJar
+	}
+)
+
+func (e *testJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
+	e.CookieJar.SetCookies(u, cookies)
+}
+
+func (e *testJar) Cookies(u *url.URL) []*http.Cookie {
+	res := e.CookieJar.Cookies(u)
+	return res
+}
+
+func (e *testJar) Clear() {
+	j, err := cookiejar.New(&cookiejar.Options{
+		PublicSuffixList: publicsuffix.List,
+	})
+	if err != nil {
+		panic(err)
+	}
+	e.CookieJar = j
+}
+
 func main() {
 	flag.Parse()
 	st := lua.NewState()
 
 	os.Chdir(*dir)
 
+	jar := &testJar{}
+	jar.Clear()
+
 	st.PreloadModule("http", gluahttp.NewHttpModule(&http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: tlsConfig,
 		},
+		//CheckRedirect: noRedirect,
+		Jar: jar,
 	}).Loader)
+	st.PreloadModule("url", gluaurl.Loader)
 	st.SetGlobal("println", st.NewFunction(lua.LGFunction(printFn)))
 	st.SetGlobal("print", st.NewFunction(lua.LGFunction(printFn)))
 	st.SetGlobal("fail", st.NewFunction(lua.LGFunction(failFn)))
 	st.SetGlobal("fatal", st.NewFunction(lua.LGFunction(fatalFn)))
 	st.SetGlobal("skipVerify", st.NewFunction(lua.LGFunction(skipVerifyFn)))
+	st.SetGlobal("clear_cookies", st.NewFunction(lua.LGFunction(func(_ *lua.LState) int {
+		jar.Clear()
+		return 0
+	})))
 
 	code, err := ioutil.ReadFile(*file)
 	if err != nil {
