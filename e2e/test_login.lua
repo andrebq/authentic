@@ -8,12 +8,16 @@ if err then fatal(err) end
 if res.status_code ~= 200 then fatal("Unexpected status code.", res.status_code) end
 
 local formBody = url.build_query_string({
-    username= "something",
-    password= "something"
+    username= "nobody@example.com",
+    password= "nobody"
 })
+println("formbody: ", formBody)
 
 println("executing login")
-res, err = http.post('https://localhost:8080/auth/login', {body= formBody})
+res, err = http.post('https://localhost:8080/auth/login', {
+    headers={
+        ["Content-Type"]="application/x-www-form-urlencoded"},
+    body= formBody})
 if err then fatal(err) end
 if res.status_code ~=200 then fatal("Unexpected status code.", res.status_code) end
 

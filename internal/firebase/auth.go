@@ -2,45 +2,60 @@ package firebase
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 
-	firebase "firebase.google.com/go"
-	"firebase.google.com/go/auth"
+	"github.com/dghubble/sling"
 )
 
 type (
 	// UserCatalog exposes some parts of Firebase user auth
 	UserCatalog struct {
-		app  *firebase.App
-		auth *auth.Client
+		fbApiKey string
 	}
 )
 
 // Users creates a new user catalog
-func Users(ctx context.Context) (*UserCatalog, error) {
-	app, err := firebase.NewApp(ctx, nil)
-	if err != nil {
-		return nil, fmt.Errorf("unable to open user catalog: %v", err)
+func Users() (*UserCatalog, error) {
+	uc := &UserCatalog{
+		fbApiKey: os.Getenv("FIREBASE_WEB_APIKEY"),
 	}
-	auth, err := app.Auth(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unable to open user catalog: %v", err)
+	if uc.fbApiKey == "" {
+		return nil, errors.New("Missing FIREBASE_WEB_APIKEY environment variable")
 	}
-	return &UserCatalog{app, auth}, nil
+	return uc, nil
 }
 
 // Authenticate checks if the combination username/password are valid
 func (uc *UserCatalog) Authenticate(ctx context.Context, username, password string) error {
-	tk, err := uc.auth.VerifyIDTokenAndCheckRevoked(ctx, password)
-	if err != nil {
-		return fmt.Errorf("unable to validate credentials: %v", err)
+	qs := struct {
+		APIKey string `url:"key"`
+	}{APIKey: uc.fbApiKey}
+	signIn := struct {
+		Email       string `json:"email"`
+		Password    string `json:"password"`
+		SecureToken bool   `json:"returnSecureToken"`
+	}{
+		Email:       username,
+		Password:    password,
+		SecureToken: true,
 	}
-	user, err := uc.auth.GetUser(ctx, tk.UID)
+	println("info: ", fmt.Sprintf("%v", signIn))
+	response := struct {
+		IDToken    string `json:"idToken"`
+		Email      string `json:"email"`
+		Registered bool   `json:"registered"`
+	}{}
+	httpResponse, err := sling.New().Post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword").
+		QueryStruct(qs).BodyJSON(signIn).Receive(&response, nil)
 	if err != nil {
-		return fmt.Errorf("unable to validate credentials: %v", err)
+		println("network error")
+		return err
 	}
-	if user.Email != username {
-		return fmt.Errorf("invalid credentials")
+	if httpResponse.StatusCode != 200 {
+		println("status code error", httpResponse.StatusCode)
+		return errors.New("unable to login")
 	}
 	return nil
 }

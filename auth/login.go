@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"html/template"
 	"net/http"
 	"sync"
@@ -23,7 +24,7 @@ type (
 	// UserCatalog implements a read-only database of user information
 	UserCatalog interface {
 		// Authenticate re
-		Authenticate(username, password string) error
+		Authenticate(ctx context.Context, username, password string) error
 	}
 )
 
@@ -35,7 +36,7 @@ func (l *Login) New(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = l.catalog.Authenticate(req.Form.Get("username"), req.Form.Get("password"))
+	err = l.catalog.Authenticate(req.Context(), req.Form.Get("username"), req.Form.Get("password"))
 	if err != nil {
 		webflow.Authenticate(w, req, l.realm, "Invalid credentials")
 		return

@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/andrebq/authentic/auth"
+	"github.com/andrebq/authentic/internal/firebase"
 	"github.com/andrebq/authentic/internal/session"
 	"github.com/andrebq/authentic/internal/tcache"
 	"github.com/andrebq/authentic/proxy"
@@ -22,6 +23,11 @@ var proxyCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		catalog, err := firebase.Users()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		redis, err := tcache.NewRedis("localhost:6379")
 		if err != nil {
 			log.Fatal(err)
@@ -32,7 +38,7 @@ var proxyCmd = &cobra.Command{
 			panic(err)
 		}
 
-		authServer := auth.New("/auth/", s)
+		authServer := auth.New("/auth/", s, catalog)
 
 		proxyServer := proxy.NewReverse(
 			cmd.Flag("cookieName").Value.String(),

@@ -33,7 +33,7 @@ docker-build: gotidy
 	docker build -t authentic:test-${DOCKER_TAG} -f Test.Dockerfile .
 
 docker-run: docker-build
-	docker run --rm -ti authentic:test-${DOCKER_TAG} /bin/sh 
+	docker run --rm -ti authentic:test-${DOCKER_TAG} /bin/sh
 
 docker-verify:
-	docker run --rm authentic:test-${DOCKER_TAG} /bin/sh /authentic/e2e/check.sh
+	docker run -e FIREBASE_WEB_APIKEY --rm authentic:test-${DOCKER_TAG} /bin/sh /authentic/e2e/check.sh
