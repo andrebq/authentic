@@ -1,4 +1,4 @@
-.PHONY: build verify compile-e2e gotidy setup-dev clean docker docker-build docker-verify package watch
+.PHONY: build verify compile-e2e gotidy setup-dev clean docker docker-build full-verify package watch
 
 DOCKER_TAG ?= latest
 
@@ -20,20 +20,17 @@ compile-e2e:
 	go build -o dist/authentic ./authentic
 	go build -o dist/echo ./internal/cmd/echo
 
-verify: compile-e2e build
-	check -workdir e2e -file main.lua
-
 setup-dev:
 	go get -u github.com/spf13/cobra/cobra
 	go get -u github.com/markbates/pkger/cmd/pkger
 
-docker: | docker-build docker-verify
+docker: | package full-verify docker-build
+	docker build -t authentic:${DOCKER_TAG} -f Dockerfile .
+	docker tag authentic:${DOCKER_TAG} andrebq/authentic:${DOCKER_TAG}
 
-docker-build: gotidy
+publish: docker
+	docker push andrebq/authentic:${DOCKER_TAG}
+
+full-verify:
 	docker build -t authentic:test-${DOCKER_TAG} -f Test.Dockerfile .
-
-docker-run: docker-build
-	docker run --rm -ti authentic:test-${DOCKER_TAG} /bin/sh
-
-docker-verify:
 	docker run -e FIREBASE_WEB_APIKEY --rm authentic:test-${DOCKER_TAG} /bin/sh /authentic/e2e/check.sh

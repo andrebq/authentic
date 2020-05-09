@@ -13,9 +13,9 @@ openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
 /authentic/dist/echo -bind localhost:8081 &
 echoPid=$!
 
+export PROXY_TARGET="http://localhost:8081"
 /authentic/dist/authentic proxy \
     --tls /etc/authentic/certificate \
-    --target http://localhost:8081 \
     --bind localhost:8080 \
     --cookieName _session &
 authenticPid=$!

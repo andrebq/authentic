@@ -12,16 +12,18 @@ import (
 	"github.com/andrebq/authentic/proxy"
 	"github.com/andrebq/authentic/server"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var proxyCmd = &cobra.Command{
 	Use:   "proxy",
 	Short: "Proxy requests to the given target if the required cookies are present",
 	Run: func(cmd *cobra.Command, args []string) {
-		target, err := url.Parse(cmd.Flag("target").Value.String())
+		target, err := url.Parse(viper.GetString("proxy.target"))
 		if err != nil {
 			log.Fatal(err)
 		}
+		log.Printf("Protecting %v", target)
 
 		catalog, err := firebase.Users()
 		if err != nil {
@@ -66,6 +68,8 @@ func init() {
 	proxyCmd.PersistentFlags().String("cookieName", "authenticated", "Cookie which should be sent by the server")
 	proxyCmd.PersistentFlags().String("realm", "Secure", "Realm to use for WWW-Authenticate")
 	proxyCmd.PersistentFlags().String("target", "http://localhost:8081/", "URL to send requests after they are authenticated")
+
+	viper.BindPFlag("proxy.target", proxyCmd.PersistentFlags().Lookup("target"))
 
 	server.SetupDefaults(proxyCmd)
 }
