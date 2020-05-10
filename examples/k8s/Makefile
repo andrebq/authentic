@@ -1,4 +1,4 @@
-.PHONY: create-firebase-apikey create-ns deploy download-secrets create-configmap delete-ns
+.PHONY: create-firebase-apikey create-ns deploy download-secrets create-configmap delete-ns restart-nginx
 .SILENT: create-firebase-apikey
 
 NS ?= authentic
@@ -37,3 +37,11 @@ download-secrets:
 
 delete-ns:
 	kubectl delete ns ${NS}
+
+restart-nginx: create-configmap
+	kubectl scale deployment nginx -n ${NS} --replicas=0
+	kubectl scale deployment nginx -n ${NS} --replicas=1
+
+restart-authentic: authentic
+	kubectl scale deployment nginx -n ${NS} --replicas=0
+	kubectl scale deployment nginx -n ${NS} --replicas=1
