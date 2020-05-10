@@ -1,5 +1,5 @@
-.PHONY: create-secret create-ns deploy download-secrets create-configmap delete-ns
-.SILENT: create-secret
+.PHONY: create-firebase-apikey create-ns deploy download-secrets create-configmap delete-ns
+.SILENT: create-firebase-apikey
 
 NS ?= authentic
 
@@ -17,17 +17,19 @@ create-configmap:
 	kubectl apply -f config.yaml -n ${NS}
 
 deploy-secrets: certificate.yaml firebase-web-apikey.yaml
-	kubectl apply -f certificate.yaml -n authentic
-	kubectl apply -f firebase-web-apikey.yaml -n authentic
+	kubectl apply -f certificate.yaml -n ${NS}
+	kubectl apply -f firebase-web-apikey.yaml -n ${NS}
 
 deploy: create-configmap
-	kubectl apply -f Resources.yaml -n authentic
+	kubectl apply -f Resources.yaml -n ${NS}
+	kubectl apply -f Daemonset.yaml -n ${NS}
 
-create-secret:
+create-firebase-apikey:
 	kubectl create secret generic firebase-web-apikey \
 		--from-literal=FIREBASE_WEB_APIKEY=${FIREBASE_WEB_APIKEY} \
 		--dry-run -o yaml \
-		-n authentic > firebase-web-apikey.yaml
+		--save-config \
+		-n ${NS} > firebase-web-apikey.yaml
 
 download-secrets:
 	kubectl get secret certificate -n ${NS} -o yaml > certificate.yaml
